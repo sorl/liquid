@@ -204,7 +204,7 @@ class TestIfCondition():
         assert tmpl.render() == '...'
 
     def test_elif(self, env):
-        tmpl = env.from_string('''{% if false %}XXX{% elif true
+        tmpl = env.from_string('''{% if false %}XXX{% elsif true
             %}...{% else %}XXX{% endif %}''')
         assert tmpl.render() == '...'
 
@@ -217,7 +217,7 @@ class TestIfCondition():
         assert tmpl.render() == '[]'
 
     def test_complete(self, env):
-        tmpl = env.from_string('{% if a %}A{% elif b %}B{% elif c == d %}'
+        tmpl = env.from_string('{% if a %}A{% elsif b %}B{% elsif c == d %}'
                                'C{% else %}D{% endif %}')
         assert tmpl.render(a=0, b=False, c=42, d=42.0) == 'C'
 

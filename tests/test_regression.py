@@ -152,9 +152,9 @@ class TestBug():
 # endfor
 # if a
 #   print 'A'
-# elif b
+# elsif b
 #   print 'B'
-# elif c == d
+# elsif c == d
 #   print 'C'
 # else
 #   print 'D'
@@ -211,7 +211,7 @@ class TestBug():
         pytest.raises(TemplateSyntaxError,
                       Template, '{% if %}....{% endif %}')
         pytest.raises(TemplateSyntaxError,
-                      Template, '{% if foo %}...{% elif %}...{% endif %}')
+                      Template, '{% if foo %}...{% elsif %}...{% endif %}')
         pytest.raises(TemplateSyntaxError,
                       Template, '{% for x in %}..{% endfor %}')
 

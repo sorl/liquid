@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Jinja2
+Liquid
 ~~~~~~
 
-Jinja2 is a template engine written in pure Python.  It provides a
+Liquid is a template engine written in pure Python.  It provides a
 `Django`_ inspired non-XML syntax but supports inline expressions and
 an optional `sandboxed`_ environment.
 
 Nutshell
 --------
 
-Here a small example of a Jinja template::
+Here a small example of a Liquid template::
 
     {% extends 'base.html' %}
     {% block title %}Memberlist{% endblock %}
@@ -28,30 +28,27 @@ Philosophy
 Application logic is for the controller but don't try to make the life
 for the template designer too hard by giving him too few functionality.
 
-For more informations visit the new `Jinja2 webpage`_ and `documentation`_.
-
 .. _sandboxed: http://en.wikipedia.org/wiki/Sandbox_(computer_security)
 .. _Django: http://www.djangoproject.com/
 .. _Jinja2 webpage: http://jinja.pocoo.org/
-.. _documentation: http://jinja.pocoo.org/2/documentation/
+.. _Liquid by Shopify: http://shopify.github.io/liquid/
 """
 from setuptools import setup
 
 
 setup(
-    name='Jinja2',
-    version='2.9.dev',
-    url='http://jinja.pocoo.org/',
+    name='Liquid',
+    version='0.2.9.dev',
+    url='http://www.sumsum.se/',
     license='BSD',
-    author='Armin Ronacher',
-    author_email='armin.ronacher@active-4.com',
+    author='Mikko Hellsing',
+    author_email='mikkohellsing@gmail.com',
     description='A small but fast and easy to use stand-alone template '
                 'engine written in pure python.',
     long_description=__doc__,
-    # jinja is egg safe. But we hate eggs
     zip_safe=False,
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
+        'Development Status :: 2 - Pre-Alpha',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
@@ -74,6 +71,6 @@ setup(
     include_package_data=True,
     entry_points="""
     [babel.extractors]
-    jinja2 = jinja2.ext:babel_extract[i18n]
+    liquid = liquid.ext:babel_extract[i18n]
     """
 )

@@ -199,10 +199,10 @@ class Parser(object):
         node = result = nodes.If(lineno=self.stream.expect('name:if').lineno)
         while 1:
             node.test = self.parse_tuple(with_condexpr=False)
-            node.body = self.parse_statements(('name:elif', 'name:else',
+            node.body = self.parse_statements(('name:elsif', 'name:else',
                                                'name:endif'))
             token = next(self.stream)
-            if token.test('name:elif'):
+            if token.test('name:elsif'):
                 new_node = nodes.If(lineno=self.stream.current.lineno)
                 node.else_ = [new_node]
                 node = new_node

@@ -295,7 +295,7 @@ to ``#``, the following two examples are equivalent::
 
 The line statement prefix can appear anywhere on the line as long as no text
 precedes it.  For better readability, statements that start a block (such as
-`for`, `if`, `elif` etc.) may end with a colon::
+`for`, `if`, `elsif` etc.) may end with a colon::
 
     # for item in seq:
         ...
@@ -549,7 +549,7 @@ List of Control Structures
 --------------------------
 
 A control structure refers to all those things that control the flow of a
-program - conditionals (i.e. if/elif/else), for-loops, as well as things like
+program - conditionals (i.e. if/elsif/else), for-loops, as well as things like
 macros and blocks.  With the default syntax, control structures appear inside
 ``{% ... %}`` blocks.
 
@@ -691,12 +691,12 @@ empty or not false::
     </ul>
     {% endif %}
 
-For multiple branches, `elif` and `else` can be used like in Python.  You can
+For multiple branches, `elsif` and `else` can be used like `elif` and `else` in Python.  You can
 use more complex :ref:`expressions` there, too::
 
     {% if kenny.sick %}
         Kenny is sick.
-    {% elif kenny.dead %}
+    {% elsif kenny.dead %}
         You killed Kenny!  You bastard!!!
     {% else %}
         Kenny looks okay --- so far
