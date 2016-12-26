@@ -382,3 +382,17 @@ class TestAssign():
         tmpl = env_trim.from_string('{% assign foo %}42{% endassign %}{{ foo }}')
         assert tmpl.render() == '42'
         assert tmpl.module.foo == u'42'
+
+
+@pytest.mark.core_tags
+@pytest.mark.capture
+class TestCapture():
+    def test_normal(self, env_trim):
+        tmpl = env_trim.from_string('{% capture foo = 1 %}{{ foo }}')
+        assert tmpl.render() == '1'
+        assert tmpl.module.foo == 1
+
+    def test_block(self, env_trim):
+        tmpl = env_trim.from_string('{% capture foo %}42{% endcapture %}{{ foo }}')
+        assert tmpl.render() == '42'
+        assert tmpl.module.foo == u'42'
