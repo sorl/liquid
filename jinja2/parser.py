@@ -459,6 +459,14 @@ class Parser(object):
                   self.stream.look().test('name:in')):
                 self.stream.skip(2)
                 ops.append(nodes.Operand('notin', self.parse_add()))
+            elif self.stream.skip_if('name:contains'):
+                ops.append(nodes.Operand('in', expr))
+                expr = self.parse_add()
+            elif (self.stream.current.test('name:not') and
+                  self.stream.look().test('name:contains')):
+                self.stream.skip(2)
+                ops.append(nodes.Operand('notin', expr))
+                expr = self.parse_add()
             else:
                 break
             lineno = self.stream.current.lineno

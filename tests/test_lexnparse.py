@@ -297,6 +297,10 @@ class TestSyntax():
         tmpl = env.from_string('{{ 1 in [1, 2, 3] }}|{{ 1 not in [1, 2, 3] }}')
         assert tmpl.render() == 'True|False'
 
+    def test_containsop(self, env):
+        tmpl = env.from_string('{{ [1, 2, 3] contains 1 }}|{{ [1, 2, 3] not contains 1 }}')
+        assert tmpl.render() == 'True|False'
+
     def test_literals(self, env):
         tmpl = env.from_string('{{ [] }}|{{ {} }}|{{ () }}')
         assert tmpl.render().lower() == '[]|{}|()'
