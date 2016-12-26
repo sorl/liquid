@@ -191,7 +191,7 @@ class TestExtensions():
         tmpl = env.from_string('''
             {%- set items = [] %}
             {%- for char in "foo" %}
-                {%- do items.append(loop.index0 ~ char) %}
+                {%- do items.append(forloop.index0 ~ char) %}
             {%- endfor %}{{ items|join(', ') }}''')
         assert tmpl.render() == '0f, 1o, 2o'
 

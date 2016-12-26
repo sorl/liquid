@@ -721,8 +721,8 @@ class CodeGenerator(NodeVisitor):
         # real solution would be "nonlocal" all the identifiers that are
         # leaking into a new python frame and might be used both unassigned
         # and assigned.
-        if 'loop' in frame.identifiers.declared:
-            args = args + ['l_loop=l_loop']
+        if 'forloop' in frame.identifiers.declared:
+            args = args + ['l_forloop=l_forloop']
         self.writeline('def macro(%s):' % ', '.join(args), node)
         self.indent()
         self.buffer(frame)
@@ -1049,17 +1049,17 @@ class CodeGenerator(NodeVisitor):
             loop_frame.inspect(children)
 
         # try to figure out if we have an extended loop.  An extended loop
-        # is necessary if the loop is in recursive mode if the special loop
+        # is necessary if the loop is in recursive mode if the special forloop
         # variable is accessed in the body.
-        extended_loop = node.recursive or 'loop' in \
+        extended_loop = node.recursive or 'forloop' in \
                         find_undeclared(node.iter_child_nodes(
-                            only=('body',)), ('loop',))
+                            only=('body',)), ('forloop',))
 
         # if we don't have an recursive loop we have to find the shadowed
         # variables at that point.  Because loops can be nested but the loop
         # variable is a special one we have to enforce aliasing for it.
         if not node.recursive:
-            aliases = self.push_scope(loop_frame, ('loop',))
+            aliases = self.push_scope(loop_frame, ('forloop',))
 
         # otherwise we set up a buffer and add a function def
         else:
@@ -1068,14 +1068,14 @@ class CodeGenerator(NodeVisitor):
             self.buffer(loop_frame)
             aliases = {}
 
-        # make sure the loop variable is a special one and raise a template
-        # assertion error if a loop tries to write to loop
+        # make sure the forloop variable is a special one and raise a template
+        # assertion error if a loop tries to write to forloop
         if extended_loop:
-            self.writeline('l_loop = missing')
-            loop_frame.identifiers.add_special('loop')
+            self.writeline('l_forloop = missing')
+            loop_frame.identifiers.add_special('forloop')
         for name in node.find_all(nodes.Name):
-            if name.ctx == 'store' and name.name == 'loop':
-                self.fail('Can\'t assign to special loop variable '
+            if name.ctx == 'store' and name.name == 'forloop':
+                self.fail('Can\'t assign to special forloop variable '
                           'in for-loop target', name.lineno)
 
         self.pull_locals(loop_frame)
@@ -1084,20 +1084,20 @@ class CodeGenerator(NodeVisitor):
             self.writeline('%s = 1' % iteration_indicator)
 
         # Create a fake parent loop if the else or test section of a
-        # loop is accessing the special loop variable and no parent loop
+        # loop is accessing the special forloop variable and no parent loop
         # exists.
-        if 'loop' not in aliases and 'loop' in find_undeclared(
-           node.iter_child_nodes(only=('else_', 'test')), ('loop',)):
-            self.writeline("l_loop = environment.undefined(%r, name='loop')" %
-                ("'loop' is undefined. the filter section of a loop as well "
-                 "as the else block don't have access to the special 'loop'"
+        if 'forloop' not in aliases and 'forloop' in find_undeclared(
+           node.iter_child_nodes(only=('else_', 'test')), ('forloop',)):
+            self.writeline("l_forloop = environment.undefined(%r, name='forloop')" %
+                ("'forloop' is undefined. the filter section of a loop as well "
+                 "as the else block don't have access to the special 'forloop'"
                  " variable of the current loop.  Because there is no parent "
                  "loop it's undefined.  Happened in loop on %s" %
                  self.position(node)))
 
         self.writeline('for ', node)
         self.visit(node.target, loop_frame)
-        self.write(extended_loop and ', l_loop in LoopContext(' or ' in ')
+        self.write(extended_loop and ', l_forloop in LoopContext(' or ' in ')
 
         # if we have an extened loop and a node test, we filter in the
         # "outer frame".

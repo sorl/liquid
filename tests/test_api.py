@@ -147,7 +147,7 @@ class TestMeta():
 class TestStreaming():
 
     def test_basic_streaming(self, env):
-        tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
+        tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ forloop.index "
                                "}} - {{ item }}</li>{%- endfor %}</ul>")
         stream = tmpl.stream(seq=list(range(4)))
         assert next(stream) == '<ul>'
@@ -158,7 +158,7 @@ class TestStreaming():
         assert next(stream) == '</ul>'
 
     def test_buffered_streaming(self, env):
-        tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ loop.index "
+        tmpl = env.from_string("<ul>{% for item in seq %}<li>{{ forloop.index "
                                "}} - {{ item }}</li>{%- endfor %}</ul>")
         stream = tmpl.stream(seq=list(range(4)))
         stream.enable_buffering(size=3)

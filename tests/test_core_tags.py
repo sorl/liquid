@@ -39,9 +39,9 @@ class TestForLoop():
         slist = [42, 24]
         for seq in [slist, iter(slist), reversed(slist), (_ for _ in slist)]:
             tmpl = env.from_string('''{% for item in seq -%}
-            {{ loop.index }}|{{ loop.index0 }}|{{ loop.rindex }}|{{
-                loop.rindex0 }}|{{ loop.first }}|{{ loop.last }}|{{
-               loop.length }}###{% endfor %}''')
+            {{ forloop.index }}|{{ forloop.index0 }}|{{ forloop.rindex }}|{{
+                forloop.rindex0 }}|{{ forloop.first }}|{{ forloop.last }}|{{
+               forloop.length }}###{% endfor %}''')
             one, two, _ = tmpl.render(seq=seq).split('###')
             (one_index, one_index0, one_rindex, one_rindex0, one_first,
              one_last, one_length) = one.split('|')
@@ -58,8 +58,8 @@ class TestForLoop():
 
     def test_cycling(self, env):
         tmpl = env.from_string('''{% for item in seq %}{{
-            loop.cycle('<1>', '<2>') }}{% endfor %}{%
-            for item in seq %}{{ loop.cycle(*through) }}{% endfor %}''')
+            forloop.cycle('<1>', '<2>') }}{% endfor %}{%
+            for item in seq %}{{ forloop.cycle(*through) }}{% endfor %}''')
         output = tmpl.render(seq=list(range(4)), through=('<1>', '<2>'))
         assert output == '<1><2>' * 4
 
@@ -82,7 +82,7 @@ class TestForLoop():
 
     def test_recursive(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}
-            [{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+            [{{ item.a }}{% if item.b %}<{{ forloop(item.b) }}>{% endif %}]
         {%- endfor %}''')
         assert tmpl.render(seq=[
             dict(a=1, b=[dict(a=1), dict(a=2)]),
@@ -92,7 +92,7 @@ class TestForLoop():
 
     def test_recursive_depth0(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}
-            [{{ loop.depth0 }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+            [{{ forloop.depth0 }}:{{ item.a }}{% if item.b %}<{{ forloop(item.b) }}>{% endif %}]
         {%- endfor %}''')
         assert tmpl.render(seq=[
             dict(a=1, b=[dict(a=1), dict(a=2)]),
@@ -102,7 +102,7 @@ class TestForLoop():
 
     def test_recursive_depth(self, env):
         tmpl = env.from_string('''{% for item in seq recursive -%}
-            [{{ loop.depth }}:{{ item.a }}{% if item.b %}<{{ loop(item.b) }}>{% endif %}]
+            [{{ forloop.depth }}:{{ item.a }}{% if item.b %}<{{ forloop(item.b) }}>{% endif %}]
         {%- endfor %}''')
         assert tmpl.render(seq=[
             dict(a=1, b=[dict(a=1), dict(a=2)]),
@@ -112,25 +112,25 @@ class TestForLoop():
 
     def test_looploop(self, env):
         tmpl = env.from_string('''{% for row in table %}
-            {%- set rowloop = loop -%}
+            {%- set rowloop = forloop -%}
             {% for cell in row -%}
-                [{{ rowloop.index }}|{{ loop.index }}]
+                [{{ rowloop.index }}|{{ forloop.index }}]
             {%- endfor %}
         {%- endfor %}''')
         assert tmpl.render(table=['ab', 'cd']) == '[1|1][1|2][2|1][2|2]'
 
     def test_reversed_bug(self, env):
         tmpl = env.from_string('{% for i in items %}{{ i }}'
-                               '{% if not loop.last %}'
+                               '{% if not forloop.last %}'
                                ',{% endif %}{% endfor %}')
         assert tmpl.render(items=reversed([3, 2, 1])) == '1,2,3'
 
     def test_loop_errors(self, env):
-        tmpl = env.from_string('''{% for item in [1] if loop.index
+        tmpl = env.from_string('''{% for item in [1] if forloop.index
                                       == 0 %}...{% endfor %}''')
         pytest.raises(UndefinedError, tmpl.render)
         tmpl = env.from_string('''{% for item in [] %}...{% else
-            %}{{ loop }}{% endfor %}''')
+            %}{{ forloop }}{% endfor %}''')
         assert tmpl.render() == ''
 
     def test_loop_filter(self, env):
@@ -139,26 +139,26 @@ class TestForLoop():
         assert tmpl.render() == '[0][2][4][6][8]'
         tmpl = env.from_string('''
             {%- for item in range(10) if item is even %}[{{
-                loop.index }}:{{ item }}]{% endfor %}''')
+                forloop.index }}:{{ item }}]{% endfor %}''')
         assert tmpl.render() == '[1:0][2:2][3:4][4:6][5:8]'
 
     def test_loop_unassignable(self, env):
         pytest.raises(TemplateSyntaxError, env.from_string,
-                      '{% for loop in seq %}...{% endfor %}')
+                      '{% for forloop in seq %}...{% endfor %}')
 
     def test_scoped_special_var(self, env):
         t = env.from_string(
-            '{% for s in seq %}[{{ loop.first }}{% for c in s %}'
-            '|{{ loop.first }}{% endfor %}]{% endfor %}')
+            '{% for s in seq %}[{{ forloop.first }}{% for c in s %}'
+            '|{{ forloop.first }}{% endfor %}]{% endfor %}')
         assert t.render(seq=('ab', 'cd')) \
             == '[True|True|False][False|True|False]'
 
     def test_scoped_loop_var(self, env):
-        t = env.from_string('{% for x in seq %}{{ loop.first }}'
+        t = env.from_string('{% for x in seq %}{{ forloop.first }}'
                             '{% for y in seq %}{% endfor %}{% endfor %}')
         assert t.render(seq='ab') == 'TrueFalse'
         t = env.from_string('{% for x in seq %}{% for y in seq %}'
-                            '{{ loop.first }}{% endfor %}{% endfor %}')
+                            '{{ forloop.first }}{% endfor %}{% endfor %}')
         assert t.render(seq='ab') == 'TrueFalseTrueFalse'
 
     def test_recursive_empty_loop_iter(self, env):

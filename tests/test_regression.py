@@ -113,7 +113,7 @@ class TestBug():
         {% for num1 in range(5) %}
             {% call test() %}
                 {% for num2 in range(10) %}
-                    {{ loop.index }}
+                    {{ forloop.index }}
                 {% endfor %}
             {% endcall %}
         {% endfor %}
@@ -223,7 +223,7 @@ class TestBug():
                 {{f.baz}}
                 {{p.bar}}
                 {% if f.rec %}
-                    {{ loop(f.sub) }}
+                    {{ forloop(f.sub) }}
                 {% endif %}
             {% endfor %}
         {% endfor %}
@@ -236,7 +236,7 @@ class TestBug():
                 {{f.baz}}
                 {{p.bar}}
                 {% if f.rec %}
-                    {{ loop(f.sub) }}
+                    {{ forloop(f.sub) }}
                 {% endif %}
             {% endfor %}
         {% endfor %}
@@ -245,7 +245,7 @@ class TestBug():
     def test_else_loop_bug(self, env):
         t = Template('''
             {% for x in y %}
-                {{ loop.index0 }}
+                {{ forloop.index0 }}
             {% else %}
                 {% for i in range(3) %}{{ i }}{% endfor %}
             {% endfor %}
