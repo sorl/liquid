@@ -203,7 +203,7 @@ class TestIfCondition():
         tmpl = env.from_string('''{% if true %}...{% endif %}''')
         assert tmpl.render() == '...'
 
-    def test_elif(self, env):
+    def test_elsif(self, env):
         tmpl = env.from_string('''{% if false %}XXX{% elsif true
             %}...{% else %}XXX{% endif %}''')
         assert tmpl.render() == '...'
@@ -227,6 +227,40 @@ class TestIfCondition():
         assert tmpl.render(a=True) == '1'
         tmpl = env.from_string(
             '{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}')
+        assert tmpl.render() == '1'
+
+
+@pytest.mark.core_tags
+@pytest.mark.unless_condition
+class TestUnlessCondition():
+    def test_simple(self, env):
+        tmpl = env.from_string('''{% unless false %}...{% endunless %}''')
+        assert tmpl.render() == '...'
+
+    def test_elsif(self, env):
+        tmpl = env.from_string('''{% unless true %}XXX{% elsif true
+            %}...{% else %}XXX{% endunless %}''')
+        assert tmpl.render() == '...'
+
+    def test_else(self, env):
+        tmpl = env.from_string('{% unless true %}XXX{% else %}...{% endunless %}')
+        assert tmpl.render() == '...'
+
+    def test_empty(self, env):
+        tmpl = env.from_string('[{% unless false %}{% else %}{% endunless %}]')
+        assert tmpl.render() == '[]'
+
+    def test_complete(self, env):
+        tmpl = env.from_string('{% unless not a %}A{% elsif b %}B{% elsif c == d %}'
+                               'C{% else %}D{% endunless %}')
+        assert tmpl.render(a=0, b=False, c=42, d=42.0) == 'C'
+
+    def test_no_scope(self, env):
+        tmpl = env.from_string(
+            '{% unless not a %}{% set foo = 1 %}{% endunless %}{{ foo }}')
+        assert tmpl.render(a=True) == '1'
+        tmpl = env.from_string(
+            '{% unless false %}{% set foo = 1 %}{% endunless %}{{ foo }}')
         assert tmpl.render() == '1'
 
 
