@@ -308,8 +308,8 @@ class LoopContext(object):
     first = property(lambda x: x.index0 == 0)
     last = property(lambda x: x._after is _last_iteration)
     index = property(lambda x: x.index0 + 1)
-    revindex = property(lambda x: x.length - x.index0)
-    revindex0 = property(lambda x: x.length - x.index)
+    rindex = property(lambda x: x.length - x.index0)
+    rindex0 = property(lambda x: x.length - x.index)
     depth = property(lambda x: x.depth0 + 1)
 
     def __len__(self):
