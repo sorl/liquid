@@ -360,7 +360,7 @@ class TestMacros():
 @pytest.mark.set
 class TestSet():
     def test_normal(self, env_trim):
-        tmpl = env_trim.from_string('{% assign foo = 1 %}{{ foo }}')
+        tmpl = env_trim.from_string('{% set foo = 1 %}{{ foo }}')
         assert tmpl.render() == '1'
         assert tmpl.module.foo == 1
 
