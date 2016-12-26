@@ -14,9 +14,9 @@ from jinja2.lexer import describe_token, describe_token_expr
 from jinja2._compat import imap
 
 
-_statement_keywords = frozenset(['for', 'if', 'unless', 'block', 'extends', 'print',
-                                 'macro', 'include', 'from', 'import',
-                                 'set'])
+_statement_keywords = frozenset(['for', 'if', 'unless', 'block', 'extends',
+                                 'print', 'macro', 'include', 'from',
+                                 'import', 'set', 'assign'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])
 
 
@@ -165,13 +165,24 @@ class Parser(object):
         return result
 
     def parse_set(self):
-        """Parse an assign statement."""
+        """Parse a set statement."""
         lineno = next(self.stream).lineno
         target = self.parse_assign_target()
         if self.stream.skip_if('assign'):
             expr = self.parse_tuple()
             return nodes.Assign(target, expr, lineno=lineno)
         body = self.parse_statements(('name:endset',),
+                                     drop_needle=True)
+        return nodes.AssignBlock(target, body, lineno=lineno)
+
+    def parse_assign(self):
+        """Parse an assign statement."""
+        lineno = next(self.stream).lineno
+        target = self.parse_assign_target()
+        if self.stream.skip_if('assign'):
+            expr = self.parse_tuple()
+            return nodes.Assign(target, expr, lineno=lineno)
+        body = self.parse_statements(('name:endassign',),
                                      drop_needle=True)
         return nodes.AssignBlock(target, body, lineno=lineno)
 
