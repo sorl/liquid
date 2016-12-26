@@ -13,7 +13,7 @@ import sys
 from itertools import chain
 from jinja2.nodes import EvalContext, _context_function_types
 from jinja2.utils import Markup, soft_unicode, escape, missing, concat, \
-     internalcode, object_type_repr
+     internalcode, object_type_repr, is_falsy, is_truthy
 from jinja2.exceptions import UndefinedError, TemplateRuntimeError, \
      TemplateNotFound
 from jinja2._compat import imap, text_type, iteritems, \
@@ -24,7 +24,8 @@ from jinja2._compat import imap, text_type, iteritems, \
 __all__ = ['LoopContext', 'TemplateReference', 'Macro', 'Markup',
            'TemplateRuntimeError', 'missing', 'concat', 'escape',
            'markup_join', 'unicode_join', 'to_string', 'identity',
-           'TemplateNotFound', 'make_logging_undefined']
+           'TemplateNotFound', 'make_logging_undefined', 'is_falsy',
+           'is_truthy']
 
 #: the name of the function that is used to convert something into
 #: a string.  We can just use the text type here.

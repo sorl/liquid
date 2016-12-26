@@ -18,6 +18,7 @@
 """
 from jinja2 import nodes
 from jinja2.visitor import NodeTransformer
+from jinja2.utils import is_truthy
 
 
 def optimize(node, environment):
@@ -42,7 +43,7 @@ class Optimizer(NodeTransformer):
             val = self.visit(node.test).as_const()
         except nodes.Impossible:
             return self.generic_visit(node)
-        if val:
+        if is_truthy(val):
             body = node.body
         else:
             body = node.else_

@@ -99,6 +99,22 @@ def is_undefined(obj):
     return isinstance(obj, Undefined)
 
 
+def is_falsy(obj):
+    """Liquid templates evaluate false (`False`) and nil (`None`) as falsy,
+    everything else is truthy. We probably want `Undefined` falsy too.
+    https://shopify.github.io/liquid/basics/truthy-and-falsy/
+    """
+    return obj is False or obj is None or is_undefined(obj)
+
+
+def is_truthy(obj):
+    """Liquid templates evaluate false (`False`) and nil (`None`) as falsy,
+    everything else is truthy. We probably want `Undefined` falsy too.
+    https://shopify.github.io/liquid/basics/truthy-and-falsy/
+    """
+    return not is_falsy(obj)
+
+
 def consume(iterable):
     """Consumes an iterable without doing anything with it."""
     for event in iterable:

@@ -1165,9 +1165,9 @@ class CodeGenerator(NodeVisitor):
 
     def visit_If(self, node, frame):
         if_frame = frame.soft()
-        self.writeline('if ', node)
+        self.writeline('if is_truthy(', node)
         self.visit(node.test, if_frame)
-        self.write(':')
+        self.write('):')
         self.indent()
         self.blockvisit(node.body, if_frame)
         self.outdent()

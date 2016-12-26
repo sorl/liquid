@@ -219,7 +219,7 @@ class TestIfCondition():
     def test_complete(self, env):
         tmpl = env.from_string('{% if a %}A{% elsif b %}B{% elsif c == d %}'
                                'C{% else %}D{% endif %}')
-        assert tmpl.render(a=0, b=False, c=42, d=42.0) == 'C'
+        assert tmpl.render(a=None, b=False, c=42, d=42.0) == 'C'
 
     def test_no_scope(self, env):
         tmpl = env.from_string(
@@ -228,6 +228,22 @@ class TestIfCondition():
         tmpl = env.from_string(
             '{% if true %}{% set foo = 1 %}{% endif %}{{ foo }}')
         assert tmpl.render() == '1'
+
+    def test_zero(self, env):
+        tmpl = env.from_string('''{% if 0 %}...{% endif %}''')
+        assert tmpl.render() == '...'
+
+    def test_emptystring(self, env):
+        tmpl = env.from_string('''{% if "" %}...{% endif %}''')
+        assert tmpl.render() == '...'
+
+    def test_emptylist(self, env):
+        tmpl = env.from_string('''{% if [] %}...{% endif %}''')
+        assert tmpl.render() == '...'
+
+    def test_emptydict(self, env):
+        tmpl = env.from_string('''{% if {} %}...{% endif %}''')
+        assert tmpl.render() == '...'
 
 
 @pytest.mark.core_tags
