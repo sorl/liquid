@@ -15,8 +15,8 @@ from jinja2._compat import imap
 
 
 _statement_keywords = frozenset(['for', 'if', 'unless', 'block', 'extends',
-                                 'print', 'macro', 'include', 'from',
-                                 'import', 'set', 'assign', 'capture'])
+                                 'print', 'macro', 'include', 'section',
+                                 'from', 'import', 'set', 'assign', 'capture'])
 _compare_operators = frozenset(['eq', 'ne', 'lt', 'lteq', 'gt', 'gteq'])
 
 
@@ -263,8 +263,8 @@ class Parser(object):
             node.with_context = default
         return node
 
-    def parse_include(self):
-        node = nodes.Include(lineno=next(self.stream).lineno)
+    def parse_include(self, node_cls=nodes.Include):
+        node = node_cls(lineno=next(self.stream).lineno)
         node.template = self.parse_expression()
         if self.stream.current.test('name:ignore') and \
            self.stream.look().test('name:missing'):
@@ -273,6 +273,9 @@ class Parser(object):
         else:
             node.ignore_missing = False
         return self.parse_import_context(node, True)
+
+    def parse_section(self):
+        return self.parse_include(node_cls=nodes.Section)
 
     def parse_import(self):
         node = nodes.Import(lineno=next(self.stream).lineno)

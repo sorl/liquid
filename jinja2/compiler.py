@@ -923,7 +923,7 @@ class CodeGenerator(NodeVisitor):
         # and now we have one more
         self.extends_so_far += 1
 
-    def visit_Include(self, node, frame):
+    def _visit_Include(self, node, frame, fmt=None):
         """Handles includes."""
         if node.with_context:
             self.unoptimize_scope(frame)
@@ -942,7 +942,10 @@ class CodeGenerator(NodeVisitor):
 
         self.writeline('template = environment.%s(' % func_name, node)
         self.visit(node.template, frame)
-        self.write(', %r)' % self.name)
+        if fmt is not None:
+            self.write(', %r, fmt="%s")' % (self.name, fmt))
+        else:
+            self.write(', %r)' % self.name)
         if node.ignore_missing:
             self.outdent()
             self.writeline('except TemplateNotFound:')
@@ -965,6 +968,12 @@ class CodeGenerator(NodeVisitor):
 
         if node.ignore_missing:
             self.outdent()
+
+    def visit_Include(self, node, frame):
+        self._visit_Include(node, frame, fmt='snippets/{}.liquid')
+
+    def visit_Section(self, node, frame):
+        self._visit_Include(node, frame, fmt='sections/{}.liquid')
 
     def visit_Import(self, node, frame):
         """Visit regular imports."""

@@ -318,6 +318,11 @@ class Include(Stmt):
     fields = ('template', 'with_context', 'ignore_missing')
 
 
+class Section(Stmt):
+    """A node that represents the section tag."""
+    fields = ('template', 'with_context', 'ignore_missing')
+
+
 class Import(Stmt):
     """A node that represents the import tag."""
     fields = ('template', 'target', 'with_context')

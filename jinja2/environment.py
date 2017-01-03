@@ -782,11 +782,12 @@ class Environment(object):
         return template
 
     @internalcode
-    def get_template(self, name, parent=None, globals=None):
+    def get_template(self, name, parent=None, globals=None, fmt=None):
         """Load a template from the loader.  If a loader is configured this
         method ask the loader for the template and returns a :class:`Template`.
         If the `parent` parameter is not `None`, :meth:`join_path` is called
-        to get the real template name before loading.
+        to get the real template name before loading. If the `fmt` parameter is
+        not `None` then the name is foramtted using this value.
 
         The `globals` parameter can be used to provide template wide globals.
         These variables are available in the context at render time.
@@ -800,12 +801,14 @@ class Environment(object):
         """
         if isinstance(name, Template):
             return name
+        if fmt is not None:
+            name = fmt.format(name)
         if parent is not None:
             name = self.join_path(name, parent)
         return self._load_template(name, self.make_globals(globals))
 
     @internalcode
-    def select_template(self, names, parent=None, globals=None):
+    def select_template(self, names, parent=None, globals=None, fmt=None):
         """Works like :meth:`get_template` but tries a number of templates
         before it fails.  If it cannot find any of the templates, it will
         raise a :exc:`TemplatesNotFound` exception.
@@ -823,6 +826,8 @@ class Environment(object):
         for name in names:
             if isinstance(name, Template):
                 return name
+            if fmt is not None:
+                name = fmt.format(name)
             if parent is not None:
                 name = self.join_path(name, parent)
             try:
@@ -833,7 +838,7 @@ class Environment(object):
 
     @internalcode
     def get_or_select_template(self, template_name_or_list,
-                               parent=None, globals=None):
+                               parent=None, globals=None, fmt=None):
         """Does a typecheck and dispatches to :meth:`select_template`
         if an iterable of template names is given, otherwise to
         :meth:`get_template`.
@@ -841,10 +846,10 @@ class Environment(object):
         .. versionadded:: 2.3
         """
         if isinstance(template_name_or_list, string_types):
-            return self.get_template(template_name_or_list, parent, globals)
+            return self.get_template(template_name_or_list, parent, globals, fmt)
         elif isinstance(template_name_or_list, Template):
             return template_name_or_list
-        return self.select_template(template_name_or_list, parent, globals)
+        return self.select_template(template_name_or_list, parent, globals, fmt)
 
     def from_string(self, source, globals=None, template_class=None):
         """Load a template from a string.  This parses the source given and

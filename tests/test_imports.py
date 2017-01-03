@@ -16,11 +16,12 @@ from jinja2.exceptions import TemplateNotFound, TemplatesNotFound
 
 @pytest.fixture
 def test_env():
-    env = Environment(loader=DictLoader(dict(
-        module='{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
-        header='[{{ foo }}|{{ 23 }}]',
-        o_printer='({{ o }})'
-    )))
+    env = Environment(loader=DictLoader({
+        'module': '{% macro test() %}[{{ foo }}|{{ bar }}]{% endmacro %}',
+        'snippets/header.liquid': '[{{ foo }}|{{ 23 }}]',
+        'snippets/o_printer.liquid': '({{ o }})',
+        'sections/header.liquid': '[{{ foo }}|{{ 24 }}]',
+    }))
     env.globals['bar'] = 23
     return env
 
@@ -84,6 +85,14 @@ class TestIncludes():
         t = test_env.from_string('{% include "header" without context %}')
         assert t.render(foo=42) == '[|23]'
 
+    def test_context_section(self, test_env):
+        t = test_env.from_string('{% section "header" %}')
+        assert t.render(foo=42) == '[42|24]'
+        t = test_env.from_string('{% section "header" with context %}')
+        assert t.render(foo=42) == '[42|24]'
+        t = test_env.from_string('{% section "header" without context %}')
+        assert t.render(foo=42) == '[|24]'
+
     def test_choice_includes(self, test_env):
         t = test_env.from_string('{% include ["missing", "header"] %}')
         assert t.render(foo=42) == '[42|23]'
@@ -129,10 +138,10 @@ class TestIncludes():
             assert t.render() == ''
 
     def test_context_include_with_overrides(self, test_env):
-        env = Environment(loader=DictLoader(dict(
-            main="{% for item in [1, 2, 3] %}{% include 'item' %}{% endfor %}",
-            item="{{ item }}"
-        )))
+        env = Environment(loader=DictLoader({
+            'main': "{% for item in [1, 2, 3] %}{% include 'item' %}{% endfor %}",
+            'snippets/item.liquid': "{{ item }}"
+        }))
         assert env.get_template("main").render() == "123"
 
     def test_unoptimized_scopes(self, test_env):
