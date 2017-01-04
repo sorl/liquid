@@ -401,75 +401,75 @@ class Parser(object):
                       __name__.lower(), target.lineno)
         return target
 
-    def parse_expression(self, with_condexpr=True):
+    def parse_expression(self, with_condexpr=True, with_filter=True):
         """Parse an expression.  Per default all expressions are parsed, if
         the optional `with_condexpr` parameter is set to `False` conditional
         expressions are not parsed.
         """
         if with_condexpr:
-            return self.parse_condexpr()
-        return self.parse_or()
+            return self.parse_condexpr(with_filter)
+        return self.parse_or(with_filter)
 
-    def parse_condexpr(self):
+    def parse_condexpr(self, with_filter=True):
         lineno = self.stream.current.lineno
-        expr1 = self.parse_or()
+        expr1 = self.parse_or(with_filter)
         while self.stream.skip_if('name:if'):
-            expr2 = self.parse_or()
+            expr2 = self.parse_or(with_filter)
             if self.stream.skip_if('name:else'):
-                expr3 = self.parse_condexpr()
+                expr3 = self.parse_condexpr(with_filter)
             else:
                 expr3 = None
             expr1 = nodes.CondExpr(expr2, expr1, expr3, lineno=lineno)
             lineno = self.stream.current.lineno
         return expr1
 
-    def parse_or(self):
+    def parse_or(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_and()
+        left = self.parse_and(with_filter)
         while self.stream.skip_if('name:or'):
-            right = self.parse_and()
+            right = self.parse_and(with_filter)
             left = nodes.Or(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_and(self):
+    def parse_and(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_not()
+        left = self.parse_not(with_filter)
         while self.stream.skip_if('name:and'):
-            right = self.parse_not()
+            right = self.parse_not(with_filter)
             left = nodes.And(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_not(self):
+    def parse_not(self, with_filter=True):
         if self.stream.current.test('name:not'):
             lineno = next(self.stream).lineno
-            return nodes.Not(self.parse_not(), lineno=lineno)
-        return self.parse_compare()
+            return nodes.Not(self.parse_not(with_filter), lineno=lineno)
+        return self.parse_compare(with_filter)
 
-    def parse_compare(self):
+    def parse_compare(self, with_filter=True):
         lineno = self.stream.current.lineno
-        expr = self.parse_add()
+        expr = self.parse_add(with_filter)
         ops = []
         while 1:
             token_type = self.stream.current.type
             if token_type in _compare_operators:
                 next(self.stream)
-                ops.append(nodes.Operand(token_type, self.parse_add()))
+                ops.append(nodes.Operand(token_type, self.parse_add(with_filter)))
             elif self.stream.skip_if('name:in'):
-                ops.append(nodes.Operand('in', self.parse_add()))
+                ops.append(nodes.Operand('in', self.parse_add(with_filter)))
             elif (self.stream.current.test('name:not') and
                   self.stream.look().test('name:in')):
                 self.stream.skip(2)
-                ops.append(nodes.Operand('notin', self.parse_add()))
+                ops.append(nodes.Operand('notin', self.parse_add(with_filter)))
             elif self.stream.skip_if('name:contains'):
                 ops.append(nodes.Operand('in', expr))
-                expr = self.parse_add()
+                expr = self.parse_add(with_filter)
             elif (self.stream.current.test('name:not') and
                   self.stream.look().test('name:contains')):
                 self.stream.skip(2)
                 ops.append(nodes.Operand('notin', expr))
-                expr = self.parse_add()
+                expr = self.parse_add(with_filter)
             else:
                 break
             lineno = self.stream.current.lineno
@@ -477,82 +477,82 @@ class Parser(object):
             return expr
         return nodes.Compare(expr, ops, lineno=lineno)
 
-    def parse_add(self):
+    def parse_add(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_sub()
+        left = self.parse_sub(with_filter)
         while self.stream.current.type == 'add':
             next(self.stream)
-            right = self.parse_sub()
+            right = self.parse_sub(with_filter)
             left = nodes.Add(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_sub(self):
+    def parse_sub(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_concat()
+        left = self.parse_concat(with_filter)
         while self.stream.current.type == 'sub':
             next(self.stream)
-            right = self.parse_concat()
+            right = self.parse_concat(with_filter)
             left = nodes.Sub(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_concat(self):
+    def parse_concat(self, with_filter=True):
         lineno = self.stream.current.lineno
-        args = [self.parse_mul()]
+        args = [self.parse_mul(with_filter)]
         while self.stream.current.type == 'tilde':
             next(self.stream)
-            args.append(self.parse_mul())
+            args.append(self.parse_mul(with_filter))
         if len(args) == 1:
             return args[0]
         return nodes.Concat(args, lineno=lineno)
 
-    def parse_mul(self):
+    def parse_mul(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_div()
+        left = self.parse_div(with_filter)
         while self.stream.current.type == 'mul':
             next(self.stream)
-            right = self.parse_div()
+            right = self.parse_div(with_filter)
             left = nodes.Mul(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_div(self):
+    def parse_div(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_floordiv()
+        left = self.parse_floordiv(with_filter)
         while self.stream.current.type == 'div':
             next(self.stream)
-            right = self.parse_floordiv()
+            right = self.parse_floordiv(with_filter)
             left = nodes.Div(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_floordiv(self):
+    def parse_floordiv(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_mod()
+        left = self.parse_mod(with_filter)
         while self.stream.current.type == 'floordiv':
             next(self.stream)
-            right = self.parse_mod()
+            right = self.parse_mod(with_filter)
             left = nodes.FloorDiv(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_mod(self):
+    def parse_mod(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_pow()
+        left = self.parse_pow(with_filter)
         while self.stream.current.type == 'mod':
             next(self.stream)
-            right = self.parse_pow()
+            right = self.parse_pow(with_filter)
             left = nodes.Mod(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
 
-    def parse_pow(self):
+    def parse_pow(self, with_filter=True):
         lineno = self.stream.current.lineno
-        left = self.parse_unary()
+        left = self.parse_unary(with_filter)
         while self.stream.current.type == 'pow':
             next(self.stream)
-            right = self.parse_unary()
+            right = self.parse_unary(with_filter)
             left = nodes.Pow(left, right, lineno=lineno)
             lineno = self.stream.current.lineno
         return left
@@ -775,6 +775,7 @@ class Parser(object):
         return nodes.Slice(lineno=lineno, *args)
 
     def parse_call(self, node):
+        #token = self.stream.expect_any(['colon'])
         token = self.stream.expect('colon')
         args = []
         kwargs = []
@@ -786,11 +787,12 @@ class Parser(object):
                 self.fail('invalid syntax for function call expression',
                           token.lineno)
 
-        while self.stream.current.type != 'semicolon':
+        #while self.stream.current.type != 'semicolon':
+        while self.stream.current.type not in ('pipe', 'variable_end'):
             if require_comma:
                 self.stream.expect('comma')
                 # support for trailing comma
-                if self.stream.current.type == 'semicolon':
+                if self.stream.current.type == 'variable_end':
                     break
             if self.stream.current.type == 'mul':
                 ensure(dyn_args is None and dyn_kwargs is None)
@@ -811,10 +813,10 @@ class Parser(object):
                                                 lineno=value.lineno))
                 else:
                     ensure(not kwargs)
-                    args.append(self.parse_expression())
+                    expr = self.parse_expression(with_filter=False)
+                    args.append(expr)
 
             require_comma = True
-        self.stream.expect('semicolon')
 
         if node is None:
             return args, kwargs, dyn_args, dyn_kwargs

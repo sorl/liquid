@@ -377,6 +377,26 @@ class TokenStream(object):
         finally:
             next(self)
 
+    def expect_any(self, expr):
+        """Expect a given token types and return it.  This accepts the same
+        argument as :meth:`jinja2.lexer.Token.test_any`.
+        """
+        if not self.current.test_any(expr):
+            expr = ' or '.join(describe_token_expr(e) for e in expr)
+            if self.current.type is TOKEN_EOF:
+                raise TemplateSyntaxError('unexpected end of template, '
+                                          'expected %r.' % expr,
+                                          self.current.lineno,
+                                          self.name, self.filename)
+            raise TemplateSyntaxError("expected token %r, got %r" %
+                                      (expr, describe_token(self.current)),
+                                      self.current.lineno,
+                                      self.name, self.filename)
+        try:
+            return self.current
+        finally:
+            next(self)
+
 
 def get_lexer(environment):
     """Return a lexer which is probably cached."""
