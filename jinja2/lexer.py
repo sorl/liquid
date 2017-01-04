@@ -377,12 +377,12 @@ class TokenStream(object):
         finally:
             next(self)
 
-    def expect_any(self, expr):
+    def expect_any(self, *iterable):
         """Expect a given token types and return it.  This accepts the same
         argument as :meth:`jinja2.lexer.Token.test_any`.
         """
-        if not self.current.test_any(expr):
-            expr = ' or '.join(describe_token_expr(e) for e in expr)
+        if not self.current.test_any(*iterable):
+            expr = ' or '.join(describe_token_expr(expr) for expr in iterable)
             if self.current.type is TOKEN_EOF:
                 raise TemplateSyntaxError('unexpected end of template, '
                                           'expected %r.' % expr,

@@ -775,7 +775,6 @@ class Parser(object):
         return nodes.Slice(lineno=lineno, *args)
 
     def parse_call(self, node):
-        #token = self.stream.expect_any(['colon'])
         token = self.stream.expect('colon')
         args = []
         kwargs = []
@@ -792,7 +791,7 @@ class Parser(object):
             if require_comma:
                 self.stream.expect('comma')
                 # support for trailing comma
-                if self.stream.current.type == 'variable_end':
+                if self.stream.current.type in ('pipe', 'variable_end'):
                     break
             if self.stream.current.type == 'mul':
                 ensure(dyn_args is None and dyn_kwargs is None)
