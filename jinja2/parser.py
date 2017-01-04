@@ -775,7 +775,7 @@ class Parser(object):
         return nodes.Slice(lineno=lineno, *args)
 
     def parse_call(self, node):
-        token = self.stream.expect('lparen')
+        token = self.stream.expect('colon')
         args = []
         kwargs = []
         dyn_args = dyn_kwargs = None
@@ -786,11 +786,11 @@ class Parser(object):
                 self.fail('invalid syntax for function call expression',
                           token.lineno)
 
-        while self.stream.current.type != 'rparen':
+        while self.stream.current.type != 'semicolon':
             if require_comma:
                 self.stream.expect('comma')
                 # support for trailing comma
-                if self.stream.current.type == 'rparen':
+                if self.stream.current.type == 'semicolon':
                     break
             if self.stream.current.type == 'mul':
                 ensure(dyn_args is None and dyn_kwargs is None)
@@ -814,7 +814,7 @@ class Parser(object):
                     args.append(self.parse_expression())
 
             require_comma = True
-        self.stream.expect('rparen')
+        self.stream.expect('semicolon')
 
         if node is None:
             return args, kwargs, dyn_args, dyn_kwargs
@@ -830,7 +830,7 @@ class Parser(object):
             while self.stream.current.type == 'dot':
                 next(self.stream)
                 name += '.' + self.stream.expect('name').value
-            if self.stream.current.type == 'lparen':
+            if self.stream.current.type == 'colon':
                 args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
             else:
                 args = []
