@@ -13,8 +13,8 @@ from jinja2 import Markup, Environment
 from jinja2._compat import text_type, implements_to_string
 
 
-@pytest.mark.filter2
-class TestFilter2():
+@pytest.mark.filter_colon_syntax
+class TestFilterColonSyntax():
 
     def test_filter_calling(self, env):
         rv = env.call_filter('sum', [1, 2, 3])
