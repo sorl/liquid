@@ -775,7 +775,13 @@ class Parser(object):
         return nodes.Slice(lineno=lineno, *args)
 
     def parse_call(self, node):
-        token = self.stream.expect('colon')
+        token = self.stream.expect_any('colon', 'lparen')
+        if token.type == 'colon':
+            end_types = ('pipe', 'variable_end')
+            with_filter = False
+        elif token.type == 'lparen':
+            end_types = ('rparen',)
+            with_filter = True
         args = []
         kwargs = []
         dyn_args = dyn_kwargs = None
@@ -785,13 +791,11 @@ class Parser(object):
             if not expr:
                 self.fail('invalid syntax for function call expression',
                           token.lineno)
-
-        #while self.stream.current.type != 'semicolon':
-        while self.stream.current.type not in ('pipe', 'variable_end'):
+        while self.stream.current.type not in end_types:
             if require_comma:
                 self.stream.expect('comma')
                 # support for trailing comma
-                if self.stream.current.type in ('pipe', 'variable_end'):
+                if self.stream.current.type in end_types:
                     break
             if self.stream.current.type == 'mul':
                 ensure(dyn_args is None and dyn_kwargs is None)
@@ -812,10 +816,12 @@ class Parser(object):
                                                 lineno=value.lineno))
                 else:
                     ensure(not kwargs)
-                    expr = self.parse_expression(with_filter=False)
+                    expr = self.parse_expression(with_filter=with_filter)
                     args.append(expr)
 
             require_comma = True
+        if token.type == 'lparen':
+            self.stream.expect('rparen')
 
         if node is None:
             return args, kwargs, dyn_args, dyn_kwargs
@@ -831,7 +837,7 @@ class Parser(object):
             while self.stream.current.type == 'dot':
                 next(self.stream)
                 name += '.' + self.stream.expect('name').value
-            if self.stream.current.type == 'colon':
+            if self.stream.current.type in ('colon', 'lparen'):
                 args, kwargs, dyn_args, dyn_kwargs = self.parse_call(None)
             else:
                 args = []
