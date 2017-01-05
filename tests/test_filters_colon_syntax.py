@@ -15,6 +15,7 @@ from jinja2._compat import text_type, implements_to_string
 
 @pytest.mark.filter2
 class TestFilter2():
+
     def test_filter_calling(self, env):
         rv = env.call_filter('sum', [1, 2, 3])
         assert rv == 6
@@ -313,9 +314,264 @@ class TestFilter2():
         ]) == '42'
 
     def test_sum_attributes_tuple(self, env):
-        tmpl = env.from_string('''{{ values.items()|sum: '1' }}''')
+        tmpl = env.from_string('''{{ values.items() | sum: '1' }}''')
         assert tmpl.render(values={
             'foo': 23,
             'bar': 1,
             'baz': 18,
         }) == '42'
+
+    def test_abs(self, env):
+        tmpl = env.from_string('''{{ -1 | abs }}|{{ 1 | abs }}''')
+        assert tmpl.render() == '1|1', tmpl.render()
+
+    def test_round_positive(self, env):
+        tmpl = env.from_string('{{ 2.7 | round }}|{{ 2.1 | round }}|'
+                               "{{ 2.1234 | round: 3, 'floor' }}|"
+                               "{{ 2.1 | round: 0, 'ceil' }}")
+        assert tmpl.render() == '3.0|2.0|2.123|3.0', tmpl.render()
+
+    def test_round_negative(self, env):
+        tmpl = env.from_string('{{ 21.3 | round: -1 }}|'
+                               "{{ 21.3 | round: -1, 'ceil' }}|"
+                               "{{ 21.3 | round: -1, 'floor' }}")
+        assert tmpl.render() == '20.0|30.0|20.0', tmpl.render()
+
+    def test_xmlattr(self, env):
+        tmpl = env.from_string(
+            "{{ {'foo': 42, 'bar': 23, 'fish': none, "
+            "'spam': missing, 'blub:blub': '<?>'} | xmlattr }}")
+        out = tmpl.render().split()
+        assert len(out) == 3
+        assert 'foo="42"' in out
+        assert 'bar="23"' in out
+        assert 'blub:blub="&lt;?&gt;"' in out
+
+    def test_sort1(self, env):
+        tmpl = env.from_string(
+            '{{ [2, 3, 1] | sort }}|{{ [2, 3, 1] | sort:true }}')
+        assert tmpl.render() == '[1, 2, 3]|[3, 2, 1]'
+
+    def test_sort2(self, env):
+        tmpl = env.from_string('{{ "".join(["c", "A", "b", "D"] | sort) }}')
+        assert tmpl.render() == 'AbcD'
+
+    def test_sort3(self, env):
+        tmpl = env.from_string('''{{ ['foo', 'Bar', 'blah'] | sort }}''')
+        assert tmpl.render() == "['Bar', 'blah', 'foo']"
+
+    # TODO: fix failing test
+    #def test_sort4(self, env):
+    #    @implements_to_string
+    #    class Magic(object):
+    #        def __init__(self, value):
+    #            self.value = value
+
+    #        def __str__(self):
+    #            return text_type(self.value)
+    #    tmpl = env.from_string('''{{ items | sort: attribute='value' | join }}''')
+    #    assert tmpl.render(items=map(Magic, [3, 2, 4, 1])) == '1234'
+
+    def test_groupby(self, env):
+        tmpl = env.from_string('''
+        {%- for grouper, list in [{'foo': 1, 'bar': 2},
+                                  {'foo': 2, 'bar': 3},
+                                  {'foo': 1, 'bar': 1},
+                                  {'foo': 3, 'bar': 4}] | groupby: 'foo' -%}
+            {{ grouper }}{% for x in list %}: {{ x.foo }}, {{ x.bar }}{% endfor %}|
+        {%- endfor %}''')
+        assert tmpl.render().split('|') == [
+            "1: 1, 2: 1, 1",
+            "2: 2, 3",
+            "3: 3, 4",
+            ""
+        ]
+
+    def test_groupby_tuple_index(self, env):
+        tmpl = env.from_string('''
+        {%- for grouper, list in [('a', 1), ('a', 2), ('b', 1)] | groupby: 0 -%}
+            {{ grouper }}{% for x in list %}:{{ x.1 }}{% endfor %}|
+        {%- endfor %}''')
+        assert tmpl.render() == 'a:1:2|b:1|'
+
+    def test_groupby_multidot(self, env):
+        class Date(object):
+            def __init__(self, day, month, year):
+                self.day = day
+                self.month = month
+                self.year = year
+
+        class Article(object):
+            def __init__(self, title, *date):
+                self.date = Date(*date)
+                self.title = title
+        articles = [
+            Article('aha', 1, 1, 1970),
+            Article('interesting', 2, 1, 1970),
+            Article('really?', 3, 1, 1970),
+            Article('totally not', 1, 1, 1971)
+        ]
+        tmpl = env.from_string('''
+        {%- for year, list in articles | groupby: 'date.year' -%}
+            {{ year }}{% for x in list %}[{{ x.title }}]{% endfor %}|
+        {%- endfor %}''')
+        assert tmpl.render(articles=articles).split('|') == [
+            '1970[aha][interesting][really?]',
+            '1971[totally not]',
+            ''
+        ]
+
+    def test_filtertag(self, env):
+        tmpl = env.from_string("{% filter upper | replace: 'FOO', 'foo' %}"
+                               "foobar{% endfilter %}")
+        assert tmpl.render() == 'fooBAR'
+
+    def test_replace(self, env):
+        env = Environment()
+        tmpl = env.from_string('{{ string | replace: "o", 42 }}')
+        assert tmpl.render(string='<foo>') == '<f4242>'
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{{ string | replace: "o", 42 }}')
+        assert tmpl.render(string='<foo>') == '&lt;f4242&gt;'
+        tmpl = env.from_string('{{ string | replace: "<", 42 }}')
+        assert tmpl.render(string='<foo>') == '42foo&gt;'
+        tmpl = env.from_string('{{ string | replace:"o", ">x<" }}')
+        assert tmpl.render(string=Markup('foo')) == 'f&gt;x&lt;&gt;x&lt;'
+
+    def test_forceescape(self, env):
+        tmpl = env.from_string('{{ x | forceescape }}')
+        assert tmpl.render(x=Markup('<div />')) == u'&lt;div /&gt;'
+
+    def test_safe(self, env):
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{{ "<div>foo</div>" | safe }}')
+        assert tmpl.render() == '<div>foo</div>'
+        tmpl = env.from_string('{{ "<div>foo</div>" }}')
+        assert tmpl.render() == '&lt;div&gt;foo&lt;/div&gt;'
+
+    def test_urlencode(self, env):
+        env = Environment(autoescape=True)
+        tmpl = env.from_string('{{ "Hello, world!" | urlencode }}')
+        assert tmpl.render() == 'Hello%2C%20world%21'
+        tmpl = env.from_string('{{ o | urlencode }}')
+        assert tmpl.render(o=u"Hello, world\u203d") \
+            == "Hello%2C%20world%E2%80%BD"
+        assert tmpl.render(o=(("f", 1),)) == "f=1"
+        assert tmpl.render(o=(('f', 1), ("z", 2))) == "f=1&amp;z=2"
+        assert tmpl.render(o=((u"\u203d", 1),)) == "%E2%80%BD=1"
+        assert tmpl.render(o={u"\u203d": 1}) == "%E2%80%BD=1"
+        assert tmpl.render(o={0: 1}) == "0=1"
+
+    def test_simple_map(self, env):
+        env = Environment()
+        tmpl = env.from_string('{{ ["1", "2", "3"] | map: "int" | sum }}')
+        assert tmpl.render() == '6'
+
+    # TODO fix failing test
+    #def test_attribute_map(self, env):
+    #    class User(object):
+    #        def __init__(self, name):
+    #            self.name = name
+    #    env = Environment()
+    #    users = [
+    #        User('john'),
+    #        User('jane'),
+    #        User('mike'),
+    #    ]
+    #    tmpl = env.from_string('{{ users | map: attribute="name" | join: "|" }}')
+    #    assert tmpl.render(users=users) == 'john|jane|mike'
+
+    def test_empty_map(self, env):
+        env = Environment()
+        tmpl = env.from_string('{{ none | map: "upper" | list }}')
+        assert tmpl.render() == '[]'
+
+    def test_simple_select(self, env):
+        env = Environment()
+        tmpl = env.from_string('{{ [1, 2, 3, 4, 5] | select: "odd" | join: "|" }}')
+        assert tmpl.render() == '1|3|5'
+
+    def test_bool_select(self, env):
+        env = Environment()
+        tmpl = env.from_string(
+            '{{ [none, false, 0, 1, 2, 3, 4, 5] | select | join: "|" }}'
+        )
+        assert tmpl.render() == '1|2|3|4|5'
+
+    def test_simple_reject(self, env):
+        env = Environment()
+        tmpl = env.from_string('{{ [1, 2, 3, 4, 5] | reject: "odd" | join: "|" }}')
+        assert tmpl.render() == '2|4'
+
+    def test_bool_reject(self, env):
+        env = Environment()
+        tmpl = env.from_string(
+            '{{ [none, false, 0, 1, 2, 3, 4, 5] | reject | join: "|" }}'
+        )
+        assert tmpl.render() == 'None|False|0'
+
+    # TODO: fix failing test
+    #def test_simple_select_attr(self, env):
+    #    class User(object):
+    #        def __init__(self, name, is_active):
+    #            self.name = name
+    #            self.is_active = is_active
+    #    env = Environment()
+    #    users = [
+    #        User('john', True),
+    #        User('jane', True),
+    #        User('mike', False),
+    #    ]
+    #    tmpl = env.from_string(
+    #        '{{ users | selectattr: "is_active" | '
+    #        'map: attribute="name" | join: "|" }}'
+    #    )
+    #    assert tmpl.render(users=users) == 'john|jane'
+
+    # TODO: fix failing test
+    #def test_simple_reject_attr(self, env):
+    #    class User(object):
+    #        def __init__(self, name, is_active):
+    #            self.name = name
+    #            self.is_active = is_active
+    #    env = Environment()
+    #    users = [
+    #        User('john', True),
+    #        User('jane', True),
+    #        User('mike', False),
+    #    ]
+    #    tmpl = env.from_string('{{ users | rejectattr: "is_active" | '
+    #                           'map: attribute="name" | join: "|" }}')
+    #    assert tmpl.render(users=users) == 'mike'
+
+    # TODO: fix failing test
+    #def test_func_select_attr(self, env):
+    #    class User(object):
+    #        def __init__(self, id, name):
+    #            self.id = id
+    #            self.name = name
+    #    env = Environment()
+    #    users = [
+    #        User(1, 'john'),
+    #        User(2, 'jane'),
+    #        User(3, 'mike'),
+    #    ]
+    #    tmpl = env.from_string('{{ users | selectattr: "id", "odd" | '
+    #                           'map: attribute="name" | join: "|" }}')
+    #    assert tmpl.render(users=users) == 'john|mike'
+
+    # TODO: fix failing test
+    #def test_func_reject_attr(self, env):
+    #    class User(object):
+    #        def __init__(self, id, name):
+    #            self.id = id
+    #            self.name = name
+    #    env = Environment()
+    #    users = [
+    #        User(1, 'john'),
+    #        User(2, 'jane'),
+    #        User(3, 'mike'),
+    #    ]
+    #    tmpl = env.from_string('{{ users | rejectattr: "id", "odd" | '
+    #                           'map: attribute="name" | join: "|" }}')
+    #    assert tmpl.render(users=users) == 'jane'

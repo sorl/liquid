@@ -777,7 +777,7 @@ class Parser(object):
     def parse_call(self, node):
         token = self.stream.expect_any('colon', 'lparen')
         if token.type == 'colon':
-            end_types = ('pipe', 'variable_end')
+            end_types = ('pipe', 'variable_end', 'block_end')
             with_filter = False
         elif token.type == 'lparen':
             end_types = ('rparen',)
